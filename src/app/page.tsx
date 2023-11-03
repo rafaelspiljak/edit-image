@@ -1,84 +1,165 @@
 "use client";
-import DownloadButton from "@/components/DownloadButton";
 import FileUpload from "@/components/FileUpload";
 import ImageEditor from "@/components/ImageEditor";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
-export default function Home() {
-  const [image, setImage] = useState<string | null>(null);
-  const [text1, setText1] = useState("");
-  const [text2, setText2] = useState("");
-  const [text3, setText3] = useState("");
+const YourParentComponent: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [textColor, setTextColor] = useState("#000000");
+  const [fontSize, setFontSize] = useState(30);
   const [fileName, setFileName] = useState("");
-  const [textColor, setTextColor] = useState("#000000"); // State for the text color
+  const [textPositions, setTextPositions] = useState([
+    20, 50, 20, 100, 20, 150,
+  ]); // Default positions
+  const [texts, setTexts] = useState(["", "", ""]); // Default text lines
+  const [image, setImage] = useState<string | null>(null);
 
-  // Other state variables and handlers for image, text, etc.
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleTextColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTextColor(e.target.value);
   };
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFontSize(Number(e.target.value));
+  };
+
+  const handleTextPositionChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const updatedPositions = [...textPositions];
+    updatedPositions[index] = Number(e.target.value);
+    setTextPositions(updatedPositions);
+  };
+
+  const handleTextsChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const updatedTexts = [...texts];
+    updatedTexts[index] = e.target.value;
+    setTexts(updatedTexts);
+  };
+
+  const addTextLine = () => {
+    setTexts([...texts, ""]);
+    setTextPositions([...textPositions, 20, 50]); // Add default position for the new line
+  };
+
+  const deleteTextLine = (index: number) => {
+    const updatedTexts = texts.filter((_, i) => i !== index);
+    const updatedPositions = textPositions.filter(
+      (_, i) => i !== index * 2 && i !== index * 2 + 1
+    );
+    setTexts(updatedTexts);
+    setTextPositions(updatedPositions);
+  };
+
+  const downloadImage = () => {
+    if (canvasRef.current) {
+      const link = document.createElement("a");
+      link.href = canvasRef.current.toDataURL();
+      link.download = `${fileName !== "" ? fileName : "modified-image"}.png`;
+      link.click();
+    }
+  };
 
   return (
-    <div className="flex flex-col">
+    <div className="m-2">
       <div>
         <FileUpload setImage={setImage} />
       </div>
-      <div className="flex flex-col gap-4 color-black text-black m-2 p-2">
-        <input
-          className="rounded p-1"
-          type="text"
-          value={text1}
-          onChange={(e) => setText1(e.target.value)}
-          placeholder="input 1"
-        />
-        <input
-          className="rounded p-1"
-          type="text"
-          value={text2}
-          onChange={(e) => setText2(e.target.value)}
-          placeholder="input 2"
-        />
-        <input
-          className="rounded p-1"
-          type="text"
-          value={text3}
-          onChange={(e) => setText3(e.target.value)}
-          placeholder="input 3"
-        />
-
-        <input
-          className="rounded p-1"
-          type="text"
-          value={fileName}
-          onChange={(e) => setFileName(e.target.value)}
-          placeholder="File name"
-        />
-        <label className="text-white">Color picker</label>
-        <input
-          placeholder="color picker"
-          type="color"
-          value={textColor}
-          onChange={handleTextColorChange}
-        />
-      </div>
-      {image && (
-        <div className="flex justify-center items-center m-2">
-          <DownloadButton canvasRef={canvasRef} fileName={fileName} />
+      <div>
+        <div className="flex gap-2">
+          <label>Color picker</label>
+          <input
+            className="text-black"
+            type="color"
+            value={textColor}
+            onChange={handleTextColorChange}
+          />
+          <label>Font size</label>
+          <input
+            className="text-black"
+            type="number"
+            value={fontSize}
+            onChange={handleFontSizeChange}
+            min="10"
+            max="50"
+          />
         </div>
-      )}
 
-      <div className="max-h-[50vh] max-w-[50vw]">
-        <ImageEditor
-          image={image}
-          text1={text1}
-          text2={text2}
-          text3={text3}
-          canvasRef={canvasRef}
-          textColor={textColor}
-        />
+        {texts.map((text, index) => (
+          <div key={index} className="flex gap-2 m-2">
+            <input
+              placeholder="x position"
+              className="text-black"
+              type="number"
+              value={textPositions[index * 2]}
+              onChange={(e) => handleTextPositionChange(index * 2, e)}
+            />
+            <input
+              placeholder="y position"
+              className="text-black"
+              type="number"
+              value={textPositions[index * 2 + 1]}
+              onChange={(e) => handleTextPositionChange(index * 2 + 1, e)}
+            />
+            <input
+              placeholder="text"
+              className="text-black"
+              type="text"
+              value={text}
+              onChange={(e) => handleTextsChange(index, e)}
+            />
+            <button onClick={() => deleteTextLine(index)}>Delete</button>
+          </div>
+        ))}
+
+        <div className="m-2">
+          <input
+            placeholder="File name"
+            className="text-black"
+            type="text"
+            value={fileName}
+            onChange={(e) => setFileName(e.currentTarget.value)}
+          />
+        </div>
+        <div className="flex gap-2 flex-row justify-around m-2">
+          <button
+            className="rounded p-2 border-2 border-green-800"
+            onClick={addTextLine}
+          >
+            Add Text Line
+          </button>
+          <button className="rounded p-2 bg-green-800" onClick={downloadImage}>
+            Download Image
+          </button>
+        </div>
       </div>
+
+      <ImageEditor
+        image={image}
+        texts={texts}
+        canvasRef={canvasRef}
+        textColor={textColor}
+        fontSize={fontSize}
+        textPositions={textPositions}
+      />
     </div>
   );
-}
+};
+
+export default YourParentComponent;

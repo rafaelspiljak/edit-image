@@ -2,20 +2,20 @@ import React, { useEffect } from "react";
 
 interface ImageEditorProps {
   image: string | null;
-  text1: string;
-  text2: string;
-  text3: string;
+  texts: string[];
   canvasRef: React.RefObject<HTMLCanvasElement>;
-  textColor: string; // New prop for text color
+  textColor: string;
+  fontSize: number;
+  textPositions: number[];
 }
 
 const ImageEditor: React.FC<ImageEditorProps> = ({
   image,
-  text1,
-  text2,
-  text3,
+  texts,
   canvasRef,
   textColor,
+  fontSize,
+  textPositions,
 }) => {
   useEffect(() => {
     if (image && canvasRef.current) {
@@ -29,17 +29,25 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
-          ctx.font = "30px Arial";
+          ctx.font = `${fontSize}px Arial`; // Set the font size
           ctx.fillStyle = textColor; // Set the text color
-          wrapText(ctx, text1, 20, 50, 300, 30);
-          wrapText(ctx, text2, 20, 100, 300, 30);
-          wrapText(ctx, text3, 20, 150, 300, 30);
+
+          texts.forEach((text, index) => {
+            wrapText(
+              ctx,
+              text,
+              textPositions[index * 2],
+              textPositions[index * 2 + 1],
+              300,
+              30
+            );
+          });
         };
 
         img.src = image;
       }
     }
-  }, [image, text1, text2, text3, canvasRef, textColor]);
+  }, [image, texts, canvasRef, textColor, fontSize, textPositions]);
 
   // Function to wrap text within a specified width
   function wrapText(
@@ -70,6 +78,10 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
   }
 
   return <canvas ref={canvasRef} />;
+};
+
+ImageEditor.defaultProps = {
+  texts: ["", "", ""], // Default value with 3 empty lines
 };
 
 export default ImageEditor;
