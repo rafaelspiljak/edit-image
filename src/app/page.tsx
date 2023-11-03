@@ -14,19 +14,6 @@ const YourParentComponent: React.FC = () => {
   const [texts, setTexts] = useState(["", "", ""]); // Default text lines
   const [image, setImage] = useState<string | null>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          setImage(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleTextColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTextColor(e.target.value);
   };
@@ -55,7 +42,7 @@ const YourParentComponent: React.FC = () => {
 
   const addTextLine = () => {
     setTexts([...texts, ""]);
-    setTextPositions([...textPositions, 20, 50]); // Add default position for the new line
+    setTextPositions([...textPositions, 20, texts.length * 50 + 50]); // Add default position for the new line
   };
 
   const deleteTextLine = (index: number) => {
